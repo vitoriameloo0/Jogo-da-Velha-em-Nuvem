@@ -21,6 +21,7 @@ io.on('connection', (socket) => {
 
     const name = 'Player_' + socket.id.substr(0,5);
     game.players[socket.id] = {name};
+
     refreshPlayers();
 
     socket.on('disconnect', () => {
@@ -28,10 +29,17 @@ io.on('connection', (socket) => {
        refreshPlayers();
     });
 
+    // Recebe a mensagem que foi escrita por um jogador, e depois envia para o outro jogador
+    socket.on('SendMessage', (message) => {
+        const player = game.players[socket.id];
+        io.emit('ReceiveMessage',`${player.name}: ${message}`);
+
+    });
+
 });
 
 const refreshPlayers = () => {
-    socket.broadcast.emit('PlayerRefresh', game.players);
+    io.emit('PlayersRefresh', game.players);
 }
 
 

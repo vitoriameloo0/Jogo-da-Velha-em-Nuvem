@@ -1,30 +1,44 @@
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import PlayerList from './PlayerList';
+import Chat from "./Chat";
 
+let socket;
 const Game = () => {
     const [players, setPlayers] = useState({});
+    const [messages, setMessages] = useState('');
 
     useEffect(() => {
-        const socket = io("http://localhost:4000", {
+        socket = io("http://localhost:4000", {
             transports: ["websocket"] // Usa WebSocket para evitar problemas com polling
         });
         
         socket.on("connect", () => {
             console.log("Conectado ao servidor:", socket.id);
         });
-
-        socket.on('PlayerRefresh', (players) => {
-            setPlayers(players);
-        });
     }, []);
 
+    useEffect(() => {
+        socket.on('PlayersRefresh', (players) => {
+            setPlayers(players);
+        });
+    }, [players]);
+        
+    useEffect(() => {
+        socket.on('ReceiveMessage', (receivedMessage) => {
+            setMessages(messages + '\n\n' + receivedMessage);
+        });
+    }, [messages]);
+
+    // Enviar mensagem do Chat para o servidos
+    const sendMessage = (message) => { 
+        socket.emit('SendMessage', message);
+    };
+
     return (
-        <div>
-            {Object.keys(players)
-                .map((key) => (
-                    <div>{players[key].name}</div> 
-                    ))
-            }
+        <div style = {{display: 'flex', flexDirection:'row'}}>
+           <PlayerList players = {players} />
+           <Chat sendMessage = {sendMessage} messages={messages} /> 
         </div>
     );
 };
