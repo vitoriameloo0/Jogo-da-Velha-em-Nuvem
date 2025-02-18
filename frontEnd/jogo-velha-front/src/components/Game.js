@@ -1,54 +1,22 @@
-import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import React, { useContext } from "react";
 import PlayerList from './PlayerList';
 import Chat from "./Chat";
- 
-let socket;
+import { GameContext, sendMessage} from "../contexts/GameContext";
+
 const Game = () => {
-    const [players, setPlayers] = useState({});
-    const [messages, setMessages] = useState('');
-
-    useEffect(() => {
-        socket = io("http://localhost:4000", {
-            transports: ["websocket"] // Usa WebSocket para evitar problemas com polling
-        });
-        
-        socket.on("connect", () => {
-            console.log("Conectado ao servidor:", socket.id);
-        });
-    }, []);
-
-    useEffect(() => {
-        socket.on('PlayersRefresh', (players) => {
-            setPlayers(players);
-        });
-    }, [players]);
-    
-        
-    useEffect(() => {
-        const handleReceiveMessage = (receivedMessage) => {
-            setMessages(prevMessages =>  prevMessages +  receivedMessage + '\n\n');
-        };
-    
-        socket.on('ReceiveMessage', handleReceiveMessage);
-    
-        return () => {
-            socket.off('ReceiveMessage', handleReceiveMessage);
-        };
-    }, []);
-    
-    
-
-    // Enviar mensagem do Chat para o servidos
-    const sendMessage = (message) => { 
-        socket.emit('SendMessage', message);
-    };
+    const { isConnected , players, messages} = useContext(GameContext);
 
     return (
-        <div style = {{display: 'flex', flexDirection:'row'}}>
-           <PlayerList players = {players} />
-           <Chat sendMessage = {sendMessage} messages={messages} /> 
-        </div>
+        <>
+            {!isConnected && 
+                <div>Conectando...</div>
+            }
+
+            <div style = {{display: 'flex', flexDirection:'row'}}>
+                <PlayerList players = {players} />
+                <Chat sendMessage = {sendMessage} messages={messages} /> 
+            </div>
+        </>
     );
 };
 
