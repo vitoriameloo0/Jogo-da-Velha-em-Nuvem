@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import PlayerList from './PlayerList';
 import Chat from "./Chat";
-
+ 
 let socket;
 const Game = () => {
     const [players, setPlayers] = useState({});
@@ -23,12 +23,21 @@ const Game = () => {
             setPlayers(players);
         });
     }, [players]);
+    
         
     useEffect(() => {
-        socket.on('ReceiveMessage', (receivedMessage) => {
-            setMessages(messages + '\n\n' + receivedMessage);
-        });
-    }, [messages]);
+        const handleReceiveMessage = (receivedMessage) => {
+            setMessages(prevMessages =>  prevMessages +  receivedMessage + '\n\n');
+        };
+    
+        socket.on('ReceiveMessage', handleReceiveMessage);
+    
+        return () => {
+            socket.off('ReceiveMessage', handleReceiveMessage);
+        };
+    }, []);
+    
+    
 
     // Enviar mensagem do Chat para o servidos
     const sendMessage = (message) => { 
