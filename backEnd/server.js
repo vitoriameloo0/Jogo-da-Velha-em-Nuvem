@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -13,37 +14,102 @@ const io = new Server(server, {
 
 
 const game = {
-    players: {}
+    players: {},
+    rooms: {},
 };
 
 io.on('connection', (socket) => {
     console.log(`${socket.id} conectado.`);
 
-    const name = 'Player_' + socket.id.substr(0,5);
-    game.players[socket.id] = {name};
+    const name = 'Player_' + socket.id.substr(0, 5);
+    game.players[socket.id] = { name };
     sendMessage(game.players[socket.id], 'entrou');
     refreshPlayers();
+    refreshRooms();
 
     socket.on('disconnect', () => {
+        console.log(`${socket.id} desconectou.`)
         sendMessage(game.players[socket.id], 'saiu');
+        leaveRoom(socket.id);
+
         delete game.players[socket.id];
+
         refreshPlayers();
+        refreshRooms();
     });
 
-    // Recebe a mensagem que foi escrita por um jogador, e depois envia para o outro jogador
     socket.on('SendMessage', (message) => {
         sendMessage(game.players[socket.id], message);
     });
+
+    socket.on('CreateRoom', () => {
+        socket.join(socket.id);
+
+        game.rooms[socket.id] = {
+            name: `Sala do ${game.players[socket.id].name}`,
+            player1: socket.id,
+            player2: undefined
+        };
+
+        game.players[socket.id].room = socket.id;
+
+        refreshPlayers();
+        refreshRooms();
+        sendMessage(game.players[socket.id], 'criou uma sala');
+    });
+
+    socket.on('LeaveRoom', () => {
+        leaveRoom(socket.id);
+
+        refreshPlayers();
+        refreshRooms();
+    });
+
+    socket.on('JoinRoom', (roomId) => {
+        socket.join(roomId);
+
+        const position = game.rooms[roomId].player1 ? '2' : '1';
+
+        game.rooms[roomId][`player${position}`] = socket.id;
+
+        game.players[socket.id].room = roomId;
+
+        refreshPlayers();
+        refreshRooms();
+        sendMessage(game.players[socket.id], 'entrou numa sala');
+    });
 });
 
+const leaveRoom = (socketId) => {
+    const roomId = game.players[socketId].room;
+    const room = game.rooms[roomId];
+
+    if (room) {
+        game.players[socketId].room = undefined;
+
+        if (socketId === room.player1) {
+            room.player1 = undefined;
+        } else {
+            room.player2 = undefined;
+        }
+
+        if (!room.player1 && !room.player2) {
+            delete game.rooms[socketId];
+        }
+    }
+};
+
 const sendMessage = (player, message) => {
-    io.emit('ReceiveMessage',`${player.name}: ${message}`);
+    io.emit('ReceiveMessage', `${player.name}: ${message}`);
 };
 
 const refreshPlayers = () => {
     io.emit('PlayersRefresh', game.players);
-}
+};
 
+const refreshRooms = () => {
+    io.emit('RoomsRefresh', game.rooms);
+};
 
 app.get('/', (req, res) => res.send('Hello World!'));
 

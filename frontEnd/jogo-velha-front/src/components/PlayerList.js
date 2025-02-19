@@ -1,16 +1,16 @@
-import React from "react";
+import React from 'react';
 
-const PlayerList = (props) => {
+const PLayerList = (props) => {
 
     return (
         <div>
             {Object.keys(props.players)
                 .map((key) => (
-                    <div key={key}>{props.players[key].name}</div> 
-                    ))
+                    <div key={key}>{props.players[key].name}</div>
+                ))
             }
         </div>
     );
 };
 
-export default PlayerList;
+export default PLayerList;
