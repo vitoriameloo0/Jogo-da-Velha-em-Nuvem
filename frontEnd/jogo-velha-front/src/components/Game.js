@@ -1,20 +1,21 @@
 import React, { useContext } from "react";
 import PlayerList from './PlayerList';
 import Chat from "./Chat";
-import { GameContext, sendMessage} from '../contexts/GameContext';
+import { GameContext, sendMessage } from '../contexts/GameContext';
 import Rooms from "./Rooms";
+import JogoVelha from "./JogoVelha";
 
 const Game = () => {
-    const { isConnected, players, messages, match} = useContext(GameContext);
+    const { isConnected, players, messages, match } = useContext(GameContext);
     console.log(match);
 
     return (
-         <>
+        <>
             {!isConnected &&
-                <div>Desconectado, conectando...</div>
+                <div>Conectando...</div>
             }
 
-            {match.status && <div>Jogo</div>}
+            {match.status && <JogoVelha />}
 
             {!match.status &&
                 <div style={{ display: 'flex', flexDirection: 'row' }}>

@@ -124,11 +124,16 @@ const joinRoom = (roomId) => {
     socket.emit('JoinRoom', roomId);
 };
 
+const gameLoaded = () => {
+    socket.emit('GameLoaded');
+};
+
 export {
     GameContext,
     GameProvider,
     sendMessage,
     createRoom,
     leaveRoom,
-    joinRoom
+    joinRoom, 
+    gameLoaded,
 };
