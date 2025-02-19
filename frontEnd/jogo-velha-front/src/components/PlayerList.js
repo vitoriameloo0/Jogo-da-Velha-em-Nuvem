@@ -13,6 +13,6 @@ const PLayerList = (props) => {
             }
         </div>
     );
-};
+}; 
 
 export default PLayerList;

@@ -34,6 +34,11 @@ const reducer = (state, action) => {
                 ...state,
                 rooms: action.payload
             };
+        case 'MATCH':
+            return {
+                ...state,
+                match: action.payload
+            };
         case 'ADD_MESSAGE':
             return {
                 ...state,
@@ -50,41 +55,51 @@ const initialState = {
     room: {},
     rooms: {},
     players: {},
-    messages: []
+    messages: [],
+    match: {}
 };
 
 const GameProvider = (props) => {
     const [state, dispatch] = useReducer(reducer, initialState);
 
     useEffect(() => {
-        socket.on('connect', () => {
-            dispatch({ type: 'CONNECTED', payload: true });
-        });
-        socket.on('disconnect', () => {
-            dispatch({ type: 'CONNECTED', payload: false });
-        });
-        socket.on('PlayersRefresh', (players) => {
+        const onConnect = () => dispatch({ type: 'CONNECTED', payload: true });
+        const onDisconnect = () => dispatch({ type: 'CONNECTED', payload: false });
+        const onPlayersRefresh = (players) => {
             dispatch({ type: 'PLAYERS', payload: players });
             dispatch({ type: 'PLAYER', payload: players[socket.id] });
-        });
-        socket.on('ReceiveMessage', (receivedMessage) => {
+        };
+        const onReceiveMessage = (receivedMessage) => {
             dispatch({ type: 'ADD_MESSAGE', payload: receivedMessage });
-        });
-        socket.on('RoomsRefresh', (rooms) => {
+        };
+        const onRoomsRefresh = (rooms) => {
             dispatch({ type: 'ROOMS', payload: rooms });
             dispatch({ type: 'ROOM', payload: socket.id });
-        });
+        };
+        const onMatchRefresh = (match) => {
+            console.log(match);
+            dispatch({ type: 'MATCH', payload: match });
+        };
     
+        socket.on('connect', onConnect);
+        socket.on('disconnect', onDisconnect);
+        socket.on('PlayersRefresh', onPlayersRefresh);
+        socket.on('ReceiveMessage', onReceiveMessage);
+        socket.on('RoomsRefresh', onRoomsRefresh);
+        socket.on('MatchRefresh', onMatchRefresh);
+        
         socket.open();
     
         return () => {
-            socket.off('connect');
-            socket.off('disconnect');
-            socket.off('PlayersRefresh');
-            socket.off('ReceiveMessage');
-            socket.off('RoomsRefresh');
+            socket.off('connect', onConnect);
+            socket.off('disconnect', onDisconnect);
+            socket.off('PlayersRefresh', onPlayersRefresh);
+            socket.off('ReceiveMessage', onReceiveMessage);
+            socket.off('RoomsRefresh', onRoomsRefresh);
+            socket.off('MatchRefresh', onMatchRefresh);
         };
     }, []);
+    
 
     return (
         <GameContext.Provider value={state}>

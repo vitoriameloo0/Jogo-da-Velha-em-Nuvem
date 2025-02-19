@@ -6,9 +6,10 @@ import Rooms from "./Rooms";
 
 const Game = () => {
     const { isConnected, players, messages, match} = useContext(GameContext);
+    console.log(match);
 
     return (
-        <>
+         <>
             {!isConnected &&
                 <div>Desconectado, conectando...</div>
             }
