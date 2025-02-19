@@ -1,31 +1,31 @@
-import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import React, { useContext } from "react";
+import PlayerList from './PlayerList';
+import Chat from "./Chat";
+import { GameContext, sendMessage} from '../contexts/GameContext';
+import Rooms from "./Rooms";
 
 const Game = () => {
-    const [players, setPlayers] = useState({});
-
-    useEffect(() => {
-        const socket = io("http://localhost:4000", {
-            transports: ["websocket"] // Usa WebSocket para evitar problemas com polling
-        });
-        
-        socket.on("connect", () => {
-            console.log("Conectado ao servidor:", socket.id);
-        });
-
-        socket.on('PlayerRefresh', (players) => {
-            setPlayers(players);
-        });
-    }, []);
+    const { isConnected, players, messages, match} = useContext(GameContext);
+    console.log(match);
 
     return (
-        <div>
-            {Object.keys(players)
-                .map((key) => (
-                    <div>{players[key].name}</div> 
-                    ))
+         <>
+            {!isConnected &&
+                <div>Desconectado, conectando...</div>
             }
-        </div>
+
+            {match.status && <div>Jogo</div>}
+
+            {!match.status &&
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                    <div className='list-container'>
+                        <Rooms />
+                        <PlayerList players={players} />
+                    </div>
+                    <Chat sendMessage={sendMessage} messages={messages} />
+                </div>
+            }
+        </>
     );
 };
 
